@@ -6,6 +6,7 @@
 using namespace std;
 
 void process(char* filename);
+bool validfile(char* filename);
 
 int main(int argc, char *argv[])
 {
@@ -13,7 +14,14 @@ int main(int argc, char *argv[])
 	for (int i = 1; i < argc; i ++)
 	{
 		fprintf(stderr,"Formatting file: %s\n",argv[i]);
-		process(argv[i]);
+		if (validfile(argv[i]))
+		{
+			process(argv[i]);
+		}
+		else
+		{
+			fprintf(stderr,"	Error: File is not .cpp\n");
+		}
 	}
 	return 0;
 }
@@ -28,7 +36,10 @@ void process(char* filename)
 	ofstream newfile;
 	int numtab = 0;
 	string line = "";
-	bool isinline = false;
+	bool quote = false;
+	bool tick = false;
+	bool finline = false;
+	bool binline = false;
 	
 	strcpy(newfilename,filename);
 	strcat(newfilename,"new");
@@ -42,7 +53,8 @@ void process(char* filename)
 	while (myfile.good())
 	{
 		newline = "";
-		isinline = false;
+		finline = false;
+		binline = false;
 		getline(myfile,line);
 		//cout << line;
 		while(line[0] == 9 || line[0] == 32){
@@ -50,23 +62,50 @@ void process(char* filename)
 		}
 		for (int i = 0; i < line.length(); i++)
 		{
-			if (line[i] == '{')
+			if ((line[i] == '{') and !quote)
 				{
-					isinline = true;
+					finline = true;
 					numtab++;
 				}
-			else if(line[i] == '}')
+				else if(line[i] == '}' and !quote)
 			{
+				if (i != 0) binline = true;
 				if (numtab > 0)
 				{
 					numtab--;		
 				}				
 			}
+			else if((line[i] == '"') and !tick)
+			{
+				quote = !quote;
+			}
+			else if((line[i] == 39/*tick*/) and !quote)
+			{
+				tick = !tick;
+			}
 		}
-		if (isinline) newline.append(numtab-1,9);
-		else newline.append(numtab,9);
+		
+		if (numtab < 0) numtab = 0;
+		if ((finline) and (!binline) and (numtab > 0))
+		{
+			newline.append(numtab-1,9);
+			//cout << numtab-1 << " indents on line '" << line << "'" << "	/withopen" << endl;
+		}
+		else if ((!finline) and (binline)) 
+		{
+			newline.append(numtab+1,9);
+			//cout << numtab+1 << " indents on line '" << line << "'" << "	/withclose" << endl;
+		}
+		else
+		{
+			newline.append(numtab,9);
+			//cout << numtab << " indents on line '" << line << "'" << endl;
+		}
 		newline.append(line);
-		newline.append("\n");
+		if(myfile.good())
+		{
+			newline.append("\n");
+		}
 		newfile << newline;
 	}
 	
@@ -80,4 +119,18 @@ void process(char* filename)
 	result = rename(newfilename,filename);
 	if ( result == 0 )	puts ( "	Original successfully replaced" );
 	else	perror( "Error replacing original file" );
+}
+///////////////////////////////////////////
+///////////////////////////////////////////
+bool validfile(char* filename)
+{
+	int i = strlen(filename);
+	char* extension;
+	while (i > 0 and filename[i] != '.')
+	{
+		i = i - 1;
+	}
+	
+	extension = &filename[i];
+	return (strcmp(extension,".cpp") == 0);
 }
