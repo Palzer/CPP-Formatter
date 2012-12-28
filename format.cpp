@@ -1,13 +1,18 @@
 #include <iostream>
+#include <istream>
 #include <fstream>
 #include <string>
 #include <stdio.h>
 #include <string.h>
 #include <stdlib.h>
+#include <sys/types.h>
+#include <sys/stat.h>
+#include <unistd.h>
 using namespace std;
 
 void processcpp(char* filename);
-bool validcppfile(char* filename);
+bool fexists(char *filename);
+void clear(FILE* in);
 void formatfiles(int argc, char *argv[]);
 
 int main(int argc, char *argv[])
@@ -22,7 +27,7 @@ int main(int argc, char *argv[])
 	}
 	else
 	{
-		fprintf(stderr,"Usage: ./format [-r] [-f]\n\n -r : use to revert your files to the backed up version\n -f : use to format your files\n\n");
+		fprintf(stderr,"Usage: ./format [-r] [-f] files\n\n -r : use to revert your files to the backed up version\n -f : use to format your files\n\n");
 	}
 	return 0;
 }
@@ -32,11 +37,11 @@ void formatfiles(int argc, char *argv[])
 {
 	int j;
 	char* extension;
+	char c;
+	bool overwrite = true;
 	
 	for (int i = 2; i < argc; i ++)
 	{
-		fprintf(stderr,"Formatting file: %s",argv[i]);
-		
 		j = strlen(argv[i]);
 		while (j > 0 and argv[i][j] != '.')
 		{
@@ -44,30 +49,62 @@ void formatfiles(int argc, char *argv[])
 		}
 	
 		extension = &argv[i][j];
+		
+		fprintf(stderr,"Formatting file: %s as a %s filetype\n",argv[i],extension);
+		
+		if (fexists(argv[i]))
+		{
+			fprintf(stderr,"	Back up detected. Overwrite the current backup? (y/n) ");
+			c = getchar();
+			clear(stdin);
+			if (c == 'y' or c == 'Y')
+			{
+				overwrite = true;
+			}
+			else if (c == 'n' or c == 'N')
+			{
+				overwrite = false;
+			}
+			else
+			{
+				
+				fprintf(stderr,"\n	Invalid response. Not overwriting. c = %c\n",c);
+				overwrite = false;
+			}
+		}
+		if (overwrite)
+		{
+			fprintf(stderr,"	Processing file\n");
 		//if (strcmp(extension,".cpp") == 0)
 		//{
-			fprintf(stderr," as a .cpp file\n");
 			processcpp(argv[i]);
 		//}
 		//else
 		//{
 			//fprintf(stderr,"\n	Error: File is not a known type.\n");			
 		//}
+		}
 	}
 }
 ///////////////////////////////////////////
 ///////////////////////////////////////////
-bool validcppfile(char* filename)
+bool fexists(char* filename)
 {
-	int i = strlen(filename);
-	char* extension;
-	while (i > 0 and filename[i] != '.')
-	{
-		i = i - 1;
-	}
-	
-	extension = &filename[i];
-	return (strcmp(extension,".cpp") == 0);
+	char file[strlen(filename)];
+	strcpy(file,filename);
+    struct stat buf;
+    if (stat(strcat(file,".backup"), &buf) != -1)
+    {
+        return true;
+    }
+    return false;
+}
+///////////////////////////////////////////
+///////////////////////////////////////////
+void clear(FILE* in)
+{
+char ch = getc(in);
+while (ch != '\n') ch = getc(in);
 }
 ///////////////////////////////////////////
 ///////////////////////////////////////////
