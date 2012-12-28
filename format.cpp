@@ -15,6 +15,7 @@ bool fexists(char *filename);
 void clear(FILE* in);
 void formatfiles(int argc, char *argv[]);
 void revertfiles(int argc, char *argv[]);
+void stripwhite(string* line);
 
 int main(int argc, char *argv[])
 {
@@ -25,7 +26,6 @@ int main(int argc, char *argv[])
 	}
 	else if (strcmp(argv[1],"-r") == 0)
 	{
-		fprintf(stderr,"You want to revert your files. This is unimplemented\n");
 		fprintf(stderr,"Revert files? This cannot be undone. (y/n) ");
 			c = getchar();
 			clear(stdin);
@@ -36,7 +36,7 @@ int main(int argc, char *argv[])
 	}
 	else
 	{
-		fprintf(stderr,"Usage: ./format [-r] [-f] files\n\n -r : use to revert your files to the backed up version\n -f : use to format your files\n\n");
+		fprintf(stderr,"Usage: ./format [-r] [-f] files...\n\n -r : use to revert your files to the backed up version\n -f : use to format your files\n\n");
 	}
 	return 0;
 }
@@ -63,7 +63,7 @@ void revertfiles(int argc, char *argv[])
 			else
 			{
 				if ( rename(backupfilename,argv[i]) == 0)
-				{	puts ( "	Successfully reverted file" );
+				{	fprintf(stderr, "	Successfully reverted file\n" );
 					remove(oldfilename);
 				}
 				else
@@ -156,6 +156,24 @@ while (ch != '\n') ch = getc(in);
 }
 ///////////////////////////////////////////
 ///////////////////////////////////////////
+void stripwhite(string* line, int i)
+{
+try
+{
+	//cout << "stripping white from: " << *line << endl;
+	while(line->at(i) == 9 || line->at(i) == 32)
+	{
+		//fprintf(stderr,"stripped\n");
+		line->erase(i,1);
+	}
+	}
+	catch (exception& e)
+  {
+    //cerr << "exception caught: " << e.what() << endl;
+  }
+}
+///////////////////////////////////////////
+///////////////////////////////////////////
 void processcpp(char* filename)
 {
 	ifstream myfile;
@@ -168,6 +186,8 @@ void processcpp(char* filename)
 	bool quote = false;
 	bool tick = false;
 	bool lastnewline = false;
+	bool linecom = false;
+	bool bloccom = false;
 	char newchar[2];
 	newchar[0] = ' ';
 	newchar[1] = 0;
@@ -185,21 +205,15 @@ void processcpp(char* filename)
 	{
 		newline = "";
 		lastnewline = false;
+		linecom = false;
 		getline(myfile,line);
-		while(line[0] == 9 || line[0] == 32)
-		{
-			line.erase(0,1);
-		}
+		stripwhite(&line,0);
 		//cout << "current line is :" << line << endl;
-		if (line[0] != '{' && line[0] != '}') newline.append(numtab,9);
+		if (line[0] != '}') newline.append(numtab,9);
 		for (int i = 0; i < line.length(); i++)
 		{
-			if ((line[i] == '{') and !quote and !tick)
+			if ((line[i] == '{') and !quote and !tick and !linecom and !bloccom)
 			{
-				if (i == 0)
-				{
-					newline.append(numtab,9);	
-				}
 				if (i != 0 and not lastnewline)
 				{
 					newline.append("\n");
@@ -208,7 +222,7 @@ void processcpp(char* filename)
 					newline.append(numtab,9);
 				}
 				newline.append("{");
-				
+				stripwhite(&line,i+1);
 				numtab++;
 				//fprintf(stderr,"opening: changing tabs to %i\n",numtab);
 				if (i != line.length() - 1)
@@ -219,7 +233,7 @@ void processcpp(char* filename)
 					newline.append(numtab,9);
 				}
 			}
-			else if(line[i] == '}' and !quote and !tick)
+			else if(line[i] == '}' and !quote and !tick and !linecom and !bloccom)
 			{
 				if (numtab > 0)
 				{
@@ -240,7 +254,8 @@ void processcpp(char* filename)
 					newline.append(numtab,9);
 				}
 				else if (newline[newline.length()-1] == '	' and lastnewline) newline.erase(newline.length()-1);
-				newline.append("}");	
+				newline.append("}");
+				stripwhite(&line,i+1);
 				if ((i != line.length()-1))
 				{
 					newline.append("\n");
@@ -249,9 +264,10 @@ void processcpp(char* filename)
 					newline.append(numtab,9);
 				}	
 			}
-			else if( line[i] == ';' and !quote and !tick)
+			else if( line[i] == ';' and !quote and !tick and !linecom and !bloccom)
 			{
 				newline.append(";");
+				stripwhite(&line,i+1);
 				if ((i != line.length()-1))
 				{
 					newline.append("\n");
@@ -259,6 +275,30 @@ void processcpp(char* filename)
 					//fprintf(stderr,"at %i, after char '%c', adding newline and appending '%i' tabs\n",i,line[i],numtab);	
 					newline.append(numtab,9);
 				}	
+			}
+			else if(i > 0 and line[i] == '/' and line[i-1] == '/' and !tick and !quote and !bloccom)
+			{
+				linecom = true;
+				//fprintf(stderr,"found line comment\n");
+				newchar[0] = line[i];
+				newline.append(newchar);
+				lastnewline = false;
+			}
+			else if (i > 0 and line[i] == '*' and line[i-1] == '/' and !tick and !quote and !bloccom and !linecom)
+			{
+				bloccom = true;
+				//fprintf(stderr,"found start of block comment\n");
+				newchar[0] = line[i];
+				newline.append(newchar);
+				lastnewline = false;
+			}
+			else if (i > 0 and line[i] == '/' and line[i-1] == '*' and !tick and !quote and bloccom and !linecom)
+			{
+				bloccom = false;
+				//fprintf(stderr,"found end of block comment\n");
+				newchar[0] = line[i];
+				newline.append(newchar);
+				lastnewline = false;
 			}
 			else if((line[i] == '"') and !tick)
 			{
