@@ -11,9 +11,12 @@ Ideas:
 	- add language detection
 	- add new languages
 	- move formatting of different languages into their own files and make corresponding header files
+	- cpp formatting
+		- something to remove spacing between lines if it isnt needed or limit spacing to one line max
 	
 Done:
 	
+	- makefile (change with file changes)
 	- if you do not specify to format or revert it gives you the program usage and help
 	- detects file language by extension
 	- alerts to unsupported files

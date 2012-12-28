@@ -6,8 +6,8 @@
 #include <stdlib.h>
 using namespace std;
 
-void process(char* filename);
-bool validfile(char* filename);
+void processcpp(char* filename);
+bool validcppfile(char* filename);
 void formatfiles(int argc, char *argv[]);
 
 int main(int argc, char *argv[])
@@ -18,7 +18,7 @@ int main(int argc, char *argv[])
 	}
 	else if (strcmp(argv[1],"-r") == 0)
 	{
-		fprintf(stderr,"You want to revert your files\n");
+		fprintf(stderr,"You want to revert your files. This is unimplemented\n");
 	}
 	else
 	{
@@ -30,22 +30,48 @@ int main(int argc, char *argv[])
 ///////////////////////////////////////////
 void formatfiles(int argc, char *argv[])
 {
+	int j;
+	char* extension;
+	
 	for (int i = 2; i < argc; i ++)
 	{
-		fprintf(stderr,"Formatting file: %s\n",argv[i]);
-		if (validfile(argv[i]))
+		fprintf(stderr,"Formatting file: %s",argv[i]);
+		
+		j = strlen(argv[i]);
+		while (j > 0 and argv[i][j] != '.')
 		{
-			process(argv[i]);
+			j = j - 1;
 		}
-		else
-		{
-			fprintf(stderr,"	Error: File is not .cpp\n");			
-		}
+	
+		extension = &argv[i][j];
+		//if (strcmp(extension,".cpp") == 0)
+		//{
+			fprintf(stderr," as a .cpp file\n");
+			processcpp(argv[i]);
+		//}
+		//else
+		//{
+			//fprintf(stderr,"\n	Error: File is not a known type.\n");			
+		//}
 	}
 }
 ///////////////////////////////////////////
 ///////////////////////////////////////////
-void process(char* filename)
+bool validcppfile(char* filename)
+{
+	int i = strlen(filename);
+	char* extension;
+	while (i > 0 and filename[i] != '.')
+	{
+		i = i - 1;
+	}
+	
+	extension = &filename[i];
+	return (strcmp(extension,".cpp") == 0);
+}
+///////////////////////////////////////////
+///////////////////////////////////////////
+void processcpp(char* filename)
 {
 	ifstream myfile;
 	char newfilename[100];	
@@ -56,7 +82,7 @@ void process(char* filename)
 	string line = "";
 	bool quote = false;
 	bool tick = false;
-	bool lastbrace = false;
+	bool lastnewline = false;
 	char newchar[2];
 	newchar[0] = ' ';
 	newchar[1] = 0;
@@ -73,7 +99,7 @@ void process(char* filename)
 	while (myfile.good())
 	{
 		newline = "";
-		lastbrace = false;
+		lastnewline = false;
 		getline(myfile,line);
 		while(line[0] == 9 || line[0] == 32)
 		{
@@ -89,9 +115,10 @@ void process(char* filename)
 				{
 					newline.append(numtab,9);	
 				}
-				if (i != 0 and not lastbrace)
+				if (i != 0 and not lastnewline)
 				{
 					newline.append("\n");
+					lastnewline = true;
 					//fprintf(stderr,"at %i, before char '%c', adding newline\n",i,line[i]);	
 					newline.append(numtab,9);
 				}
@@ -102,10 +129,10 @@ void process(char* filename)
 				if (i != line.length() - 1)
 				{
 					newline.append("\n");
+					lastnewline = true;
 					//fprintf(stderr,"at %i, after char '%c', adding newline\n",i,line[i]);	
 					newline.append(numtab,9);
 				}
-				lastbrace = true;
 			}
 			else if(line[i] == '}' and !quote and !tick)
 			{
@@ -120,21 +147,22 @@ void process(char* filename)
 					newline.append(numtab,9);
 					//fprintf(stderr,"at %i, before char '%c', appending '%i' tabs\n",i,line[i],numtab);	
 				}
-				if (i != 0 and not lastbrace)
+				if (i != 0 and not lastnewline)
 				{
 					newline.append("\n");
+					lastnewline = true;
 					//fprintf(stderr,"at %i, before char '%c', adding newline and appending '%i' tabs\n",i,line[i],numtab);	
 					newline.append(numtab,9);
 				}
-				else if (newline[newline.length()-1] == '	' and lastbrace) newline.erase(newline.length()-1);
+				else if (newline[newline.length()-1] == '	' and lastnewline) newline.erase(newline.length()-1);
 				newline.append("}");	
 				if ((i != line.length()-1))
 				{
-					newline.append("\n");	
+					newline.append("\n");
+					lastnewline = true;	
 					//fprintf(stderr,"at %i, after char '%c', adding newline and appending '%i' tabs\n",i,line[i],numtab);	
 					newline.append(numtab,9);
-				}
-				lastbrace = true;	
+				}	
 			}
 			else if((line[i] == '"') and !tick)
 			{
@@ -150,7 +178,7 @@ void process(char* filename)
 					quote = !quote;
 				}
 				newline.append("\"");
-				lastbrace = false;
+				lastnewline = false;
 			}
 			else if((line[i] == 39/*tick*/) and !quote)
 			{
@@ -166,33 +194,16 @@ void process(char* filename)
 					tick = !tick;
 				}
 				newline.append("'");
-				lastbrace = false;
+				lastnewline = false;
 			}
 			else
 			{
 				newchar[0] = line[i];
 				newline.append(newchar);
-				lastbrace = false;
+				lastnewline = false;
 			}
 		}
-		
-		/*if (numtab < 0) numtab = 0;
-		if ((finline) and (!binline) and (numtab > 0))
-		{
-			newline.append(numtab-1,9);
-			//cout << numtab-1 << " indents on line '" << line << "'" << "	/withopen" << endl;
-		}
-		else if ((!finline) and (binline)) 
-		{
-			newline.append(numtab+1,9);
-			//cout << numtab+1 << " indents on line '" << line << "'" << "	/withclose" << endl;
-		}
-		else
-		{
-			newline.append(numtab,9);
-			//cout << numtab << " indents on line '" << line << "'" << endl;
-		}
-		newline.append(line);*/
+
 		if(myfile.good())
 		{
 			newline.append("\n");
@@ -211,18 +222,4 @@ void process(char* filename)
 	result = rename(newfilename,filename);
 	if ( result == 0 )	puts ( "	Original successfully replaced" );
 	else	perror( "Error replacing original file" );*/
-}
-///////////////////////////////////////////
-///////////////////////////////////////////
-bool validfile(char* filename)
-{
-	int i = strlen(filename);
-	char* extension;
-	while (i > 0 and filename[i] != '.')
-	{
-		i = i - 1;
-	}
-	
-	extension = &filename[i];
-	return (strcmp(extension,".cpp") == 0);
 }
