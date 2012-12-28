@@ -1,7 +1,9 @@
 Work on:
 	
 	- cpp formatting
-		- eliminate matching up with braces in comments, both block and line
+		- eliminate newlines after braces when they are in comments, both block and line
+		- eliminate newlines after ; when they are in parenthesis or comments
+		- strip white space from the line being read in after each {, }, or ;
 
 Ideas:
 
@@ -10,6 +12,7 @@ Ideas:
 	- move formatting of different languages into their own files and make corresponding header files
 	- cpp formatting
 		- something to remove spacing between lines if it isnt needed or limit spacing to one line max
+		- add something to put spacers between functions and eliminate anything inbetween that isnt code
 	
 Done:
 	
