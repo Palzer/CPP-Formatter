@@ -45,22 +45,32 @@ int main(int argc, char *argv[])
 void revertfiles(int argc, char *argv[])
 {
 	char backupfilename[100];
+	char oldfilename[100];
 	for (int i = 2; i < argc; i++)
 	{
 		strcpy(backupfilename,argv[i]);
 		strcat(backupfilename,".backup");
+		strcpy(oldfilename,argv[i]);
+		strcat(oldfilename,".old");
 		
 		fprintf(stderr,"Reverting file: %s\n",argv[i]);
 		if (fexists(argv[i]))
 		{
 			fprintf(stderr,"	Processing file\n");
 			
-			if( remove(argv[i]) != 0 )
+			if( rename(argv[i],oldfilename) != 0 )
 			    perror( "Error reverting file - original could not be removed" );
 			else
 			{
-				if ( rename(backupfilename,argv[i]) == 0)	puts ( "	Successfully reverted file" );
-				else	perror( "Error reverting file - backup could not be renamed" );
+				if ( rename(backupfilename,argv[i]) == 0)
+				{	puts ( "	Successfully reverted file" );
+					remove(oldfilename);
+				}
+				else
+				{
+					perror( "Error reverting file - backup could not be reverted" );
+					rename(oldfilename,argv[i]);
+					}
 			}			
 		}
 		else
@@ -239,6 +249,17 @@ void processcpp(char* filename)
 					newline.append(numtab,9);
 				}	
 			}
+			else if( line[i] == ';' and !quote and !tick)
+			{
+				newline.append(";");
+				if ((i != line.length()-1))
+				{
+					newline.append("\n");
+					lastnewline = true;	
+					//fprintf(stderr,"at %i, after char '%c', adding newline and appending '%i' tabs\n",i,line[i],numtab);	
+					newline.append(numtab,9);
+				}	
+			}
 			else if((line[i] == '"') and !tick)
 			{
 				if (i > 0)
@@ -290,11 +311,11 @@ void processcpp(char* filename)
 	myfile.close();
 	newfile.close();
 	
-	result = rename(filename,backupfilename);
+	/*result = rename(filename,backupfilename);
 	if ( result == 0 )	puts ( "	Backup successfully created" );
 	else	perror( "Error making backup file" );
 	
 	result = rename(newfilename,filename);
 	if ( result == 0 )	puts ( "	Original successfully replaced" );
-	else	perror( "Error replacing original file" );
+	else	perror( "Error replacing original file" );*/
 }

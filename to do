@@ -1,9 +1,7 @@
 Work on:
 	
 	- cpp formatting
-		- newlines after ;
 		- eliminate matching up with braces in comments, both block and line
-	- in reverting, if there is an error, undo whatever has been done so no changes have been affected.
 
 Ideas:
 
