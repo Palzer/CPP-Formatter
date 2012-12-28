@@ -1,0 +1,26 @@
+Work on:
+	
+	- add reverting to backed up file
+	- add confirmation to overwrite backed up file if it exists
+	- cpp formatting
+		- newlines after ;
+		- eliminate matching up with braces in comments, both block and line
+
+Ideas:
+
+	- add language detection
+	- add new languages
+	- move formatting of different languages into their own files and make corresponding header files
+	
+Done:
+	
+	- if you do not specify to format or revert it gives you the program usage and help
+	- detects file language by extension
+	- alerts to unsupported files
+	- formatting for cpp files (bugs may exist, need more testing on files)
+		- puts braces on their own line
+		- makes tabs match up based on braces
+		- does not match up with invalid braces, but see above (invalid = ones in quotes or ticks)
+		
+		
+		
