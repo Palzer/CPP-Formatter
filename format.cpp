@@ -14,9 +14,11 @@ void processcpp(char* filename);
 bool fexists(char *filename);
 void clear(FILE* in);
 void formatfiles(int argc, char *argv[]);
+void revertfiles(int argc, char *argv[]);
 
 int main(int argc, char *argv[])
 {
+	char c;
 	if (strcmp(argv[1],"-f") == 0)
 	{
 		formatfiles(argc,argv);
@@ -24,12 +26,48 @@ int main(int argc, char *argv[])
 	else if (strcmp(argv[1],"-r") == 0)
 	{
 		fprintf(stderr,"You want to revert your files. This is unimplemented\n");
+		fprintf(stderr,"Revert files? This cannot be undone. (y/n) ");
+			c = getchar();
+			clear(stdin);
+			if (c == 'y' or c == 'Y')
+			{
+				revertfiles(argc,argv);
+			}
 	}
 	else
 	{
 		fprintf(stderr,"Usage: ./format [-r] [-f] files\n\n -r : use to revert your files to the backed up version\n -f : use to format your files\n\n");
 	}
 	return 0;
+}
+///////////////////////////////////////////
+///////////////////////////////////////////
+void revertfiles(int argc, char *argv[])
+{
+	char backupfilename[100];
+	for (int i = 2; i < argc; i++)
+	{
+		strcpy(backupfilename,argv[i]);
+		strcat(backupfilename,".backup");
+		
+		fprintf(stderr,"Reverting file: %s\n",argv[i]);
+		if (fexists(argv[i]))
+		{
+			fprintf(stderr,"	Processing file\n");
+			
+			if( remove(argv[i]) != 0 )
+			    perror( "Error reverting file - original could not be removed" );
+			else
+			{
+				if ( rename(backupfilename,argv[i]) == 0)	puts ( "	Successfully reverted file" );
+				else	perror( "Error reverting file - backup could not be renamed" );
+			}			
+		}
+		else
+		{
+			fprintf(stderr,"	Backup does not exist. Skipping file.\n");
+		}
+	}
 }
 ///////////////////////////////////////////
 ///////////////////////////////////////////
@@ -50,7 +88,7 @@ void formatfiles(int argc, char *argv[])
 	
 		extension = &argv[i][j];
 		
-		fprintf(stderr,"Formatting file: %s as a %s filetype\n",argv[i],extension);
+		fprintf(stderr,"Formatting file: %s, as a %s filetype\n",argv[i],extension);
 		
 		if (fexists(argv[i]))
 		{
@@ -81,7 +119,7 @@ void formatfiles(int argc, char *argv[])
 		//}
 		//else
 		//{
-			//fprintf(stderr,"\n	Error: File is not a known type.\n");			
+			//fprintf(stderr,"\n	Error: File is an unknown type.\n");			
 		//}
 		}
 	}
@@ -252,11 +290,11 @@ void processcpp(char* filename)
 	myfile.close();
 	newfile.close();
 	
-	/*result = rename(filename,backupfilename);
+	result = rename(filename,backupfilename);
 	if ( result == 0 )	puts ( "	Backup successfully created" );
 	else	perror( "Error making backup file" );
 	
 	result = rename(newfilename,filename);
 	if ( result == 0 )	puts ( "	Original successfully replaced" );
-	else	perror( "Error replacing original file" );*/
+	else	perror( "Error replacing original file" );
 }
