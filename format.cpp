@@ -188,6 +188,7 @@ void processcpp(char* filename)
 	bool lastnewline = false;
 	bool linecom = false;
 	bool bloccom = false;
+	bool paren = false;
 	char newchar[2];
 	newchar[0] = ' ';
 	newchar[1] = 0;
@@ -264,7 +265,7 @@ void processcpp(char* filename)
 					newline.append(numtab,9);
 				}	
 			}
-			else if( line[i] == ';' and !quote and !tick and !linecom and !bloccom)
+			else if( line[i] == ';' and !quote and !tick and !linecom and !bloccom and !paren)
 			{
 				newline.append(";");
 				stripwhite(&line,i+1);
@@ -275,6 +276,20 @@ void processcpp(char* filename)
 					//fprintf(stderr,"at %i, after char '%c', adding newline and appending '%i' tabs\n",i,line[i],numtab);	
 					newline.append(numtab,9);
 				}	
+			}
+			else if(line[i] == '(' and !tick and !quote and !bloccom and !linecom)
+			{
+				paren = true;
+				newchar[0] = line[i];
+				newline.append(newchar);
+				lastnewline = false;
+			}
+			else if(line[i] == ')' and !tick and !quote and !bloccom and !linecom)
+			{
+				paren = false;
+				newchar[0] = line[i];
+				newline.append(newchar);
+				lastnewline = false;
 			}
 			else if(i > 0 and line[i] == '/' and line[i-1] == '/' and !tick and !quote and !bloccom)
 			{
