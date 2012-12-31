@@ -186,6 +186,7 @@ void processcpp(char* filename)
 	bool quote = false;
 	bool tick = false;
 	bool lastnewline = false;
+	bool lastempty = false;
 	bool linecom = false;
 	bool bloccom = false;
 	bool paren = false;
@@ -209,8 +210,12 @@ void processcpp(char* filename)
 		linecom = false;
 		getline(myfile,line);
 		stripwhite(&line,0);
-		//cout << "current line is :" << line << endl;
+		cerr << "current line is : '" << line << "' and length is : ";
+		fprintf(stderr,"%i\n",line.length());
 		if (line[0] != '}') newline.append(numtab,9);
+		if (not (line.length() == 0 and lastempty))
+		{
+
 		for (int i = 0; i < line.length(); i++)
 		{
 			if ((line[i] == '{') and !quote and !tick and !linecom and !bloccom)
@@ -237,8 +242,7 @@ void processcpp(char* filename)
 			else if(line[i] == '}' and !quote and !tick and !linecom and !bloccom)
 			{
 				if (numtab > 0)
-				{
-					
+				{	
 					numtab--;
 					//fprintf(stderr,"closing: changing tabs to %i\n",numtab);		
 				}
@@ -354,14 +358,28 @@ void processcpp(char* filename)
 				lastnewline = false;
 			}
 		}
-
+		
 		if(myfile.good())
 		{
 			newline.append("\n");
 			//fprintf(stderr,"adding newline after line\n");
 		}
 		newfile << newline;
+		
+		}
+		
+		if (line.length() == 0)
+		{
+			lastempty = true;
+		}
+		else
+		{
+			lastempty = false;
+		}
+
+		
 	}
+	
 	
 	myfile.close();
 	newfile.close();

@@ -21,5 +21,7 @@ Done:
 	- can revert formatted file to the backup if available
 	- formatting for cpp files (bugs may exist, need more testing on files)
 		- puts braces on their own line
-		- makes tabs match up based on braces
+		- indents based on braces
 		- does not match up with invalid braces (invalid = ones in quotes, ticks, or comments)
+		- adds newlines after valid semicolons (invalid = ones in parenthesis)
+		- limits consecutive empty lines to one
