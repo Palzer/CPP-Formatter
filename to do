@@ -1,15 +1,13 @@
 Work on:
 	
-	
+	- cpp formatting
+		- something to put spacers between functions and eliminate anything in between that isnt code
 
 Ideas:
 
 	- add language detection
 	- add new languages
 	- move formatting of different languages, and tools into their own files and make corresponding header files
-	- cpp formatting
-		- something to remove spacing between lines if it isnt needed or limit spacing to one line max
-		- something to put spacers between functions and eliminate anything in between that isnt code
 	
 Done:
 	
